@@ -1,0 +1,655 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{dirtree}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage{amsfonts}
+
+\input{glossary}
+
+\title{\textbf{4ZP6 Capstone Project}}
+\author{Usman Asad --- asadu  --- 400199934\\
+  Ali Khan --- khana238  --- 400211680\\
+  Omar Alkersh --- alkersho --- 400214491 \\
+  Ahmed Al-sabounchi --- alsaboaa --- 001327403 \\
+  Tanveer Shakeel --- shakeelt --- 400226915}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Purpose}
+
+This document is intended to be read by programmers, it contains the projects design
+decisions pertaining to the software architecture, language, application format,
+and internal module API. The focus of the documentation is to provide guidance on the
+processes of the program, a high level overview of how it's actions are executed. It
+also provides some guidance on the internal code organization. The latter is subject
+to change depending on practical findings and use case.
+
+\subsection{Scope}
+
+This project is a compiled \Gls{CLI} tool used to manage \glspl{monorepo}. This
+tool should allow the user to check for changes in the code, execute \glspl{target},
+check project dependencies, and provide tooling to aid in \Gls{CI/CD} pipelines
+where appropriate.
+\\\\
+The goal is to provide a portable, fast, and easy to use program to help in
+CI/CD pipelines for \glspl{monorepo}.
+
+\subsection{Overview}
+
+This document consists of design decisions, module designs, and diagrams
+clarifying the design of the project. Any part of this document is subject to
+change based on need and experimentation.
+\\\\
+The decision mainly consists of the language choice and the architecture. The
+module design is meant to clarify the module breakdown, the API of each module,
+and the module interactions and dependencies. The
+\hyperref[sec:diagrams]{Diagrams} section provides more insight on the operation
+of the program and how different modules interact with each other. The diagram
+section is more concrete compared to the other sections and is not as likely
+to change.
+\\\\
+For the module specifications, the sub items in the exported types represent
+state variables.
+
+\subsection{Definitions}
+
+\printglossary[title=\normalsize\vspace*{-1.5\baselineskip}, toctitle=]
+\section{System Overview}
+
+The program is a \Gls{CLI} tool to manage \glspl{monorepo} and aid in
+\gls{CI/CD} operations. It is meant to be light weight \& portable, and has no
+trivial dependencies. The tool provides the abilities to run \glspl{target}
+concurrently, define dependencies on the project level, and on the operation
+level. It should also be able to perform operations on the projects; including
+but not limited to creating, searching, and listing.
+\\\\
+A number of companies use the \gls{monorepo} development philosophy, and more
+are adopting it. Without considering in-house solutions, there is currently only
+one real competitor in this space with others catching up. \Glspl{monorepo} are
+more complicated to manage than traditional repositories, greatly benefiting
+from a tool to help automate and manage them.
+\\\\
+There other \gls{monorepo} tools in the space such
+as; \href{https://nx.dev/}{NX}, \href{https://bazel.build/}{Bazel}, and others.
+All of them have features that the others lack, or are slow to run or slow to
+load in \gls{CI/CD} environments (NX is a node application).
+\\\\
+This program is aimed to combine their strengths, and best features based on our
+experience with them. It is meant to fill a gap that none of these programs fill.
+
+\section{System Architecture}
+
+\subsection{Architectural Design}
+
+We have opted for a ``component'' based architecture. The different features and
+logic are encapsulated in different components and modules as described in the
+\hyperref[sec:modules]{Modules} section.
+\\\\
+%% Talk about the different modules and the functions that they need to fulfill
+The modules and their definitions are subject to change.
+\\\\
+There are 5 modules; command runner, parser, data, algorithms, and common
+utility.
+
+\begin{itemize}
+\item The command runner is responsible for running the correct command
+  depending on the user's input. It also provides any specialized data definitions.
+
+\item The parser provides functions to parse files to their respective data types.
+
+\item The data modules provides the data definitions for the program. Mainly the
+  \gls{project definition} and workspace definitions.
+
+\item The algorithms module provides functions and data types to schedule the
+  execution of \gls{target} and tasks.
+
+\item The common utilities module is mainly a workaround to Golang's import
+  limitation. It doesn't allow cyclic imports. This module should contain all
+  the common functionality to avoid cyclic imports.
+\end{itemize}
+
+\subsection{Design Rationale}
+\subsubsection{Language}
+\label{sec:lang}
+
+The language that we decided to write the program in is Go. We needed a compiled
+and type checked language. We decided to choose Go over C/C++ and Java due to usability and
+safety concerns. C/C++ have the memory issues that needs to be addressed and managed; and
+Java is disliked and slow. Furthermore, it requires a JVM to be installed, which
+defeats the purpose of small installation size.
+\\\\
+We also considered Rust, but decided against it due to the learning curve and
+the majority of the team not having experience with it.
+
+\subsubsection{Software Architecture}
+
+We decided on a component based design. This should allow us to expand the
+software without significant rewrites when we want to extend its functionality.
+In addition, it allows us to work on separate parts in parallel accelerating
+development.
+\\\\
+Most other software architectures, client-server or MVC, are not relevant to
+this project nor do they provide any benefit. This program consists only of a
+compiled CLI program, no external communication is required in this iteration.
+
+\subsection{Decomposition}
+
+The following diagram mainly concerns itself with the ``import'' relation that
+the components have, which component imports which component. There is no
+inheritance or extension relation. All the data types are defined once and not
+extended beyond their definition.
+
+\newpage
+\subsubsection{Diagrams}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.5\linewidth}
+    \includegraphics[width=\linewidth]{diags/components.png}
+    \caption{\label{fig:comp}Component Diagram}
+  \end{subfigure}
+  \begin{subfigure}{0.15\linewidth}
+    \includegraphics[width=\linewidth]{diags/comp_legend.png}
+    \caption{\label{fig:comp}Legend}
+  \end{subfigure}
+  \caption{Component Composition Diagram}
+\end{figure}
+
+\begin{figure}[h!]
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.8\linewidth]{diags/system.png}
+  \caption{Data Interaction and store}
+  \label{fig:storage}
+\end{figure}
+
+Note that the data can be stored as a JSON, YAML, or a DSL that is yet to be
+developed. See figure \ref{fig:storage}.
+
+
+\newpage
+\section{Modules}
+\label{sec:modules}
+
+Each module represents a package. One module may export multiple types and
+define functions over many types. No function is assumed to be a ``class method''
+unless specified.
+
+\subsection{Command Runner}
+\label{mod:command}
+
+\subsubsection{Exported Types}
+
+The exported types are representations of the possible command line arguments
+that the program accepts. They are used to parse them and represent them in
+code. The sub items are struct fields, which represent options or the command.
+
+\begin{itemize}
+\item $Args$:
+  \begin{itemize}
+  \item help: $Boolean$
+  \item dry run: $Boolean$
+  \item version: $Boolean$
+  \item command: $Command$
+  \end{itemize}
+\item $Command$ --- enum:
+  \begin{itemize}
+  \item $List$
+  \item $Search$:
+    \begin{itemize}
+    \item searchItems: $map[key]value$
+
+    \item limit: $\mathbbm{N}$
+    \end{itemize}
+  \item $Run$:
+    \begin{itemize}
+    \item project: $string | seq(string)$
+    \item target: $string$
+    \end{itemize}
+  \item $GetChanges$:
+    \begin{itemize}
+    \item baseRef: $string$
+    \item targetRef: $string | null$
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Functions}
+
+\begin{tabular}[h!]{l|l|l|p{6cm}}
+  \textbf{Name} & \textbf{Input} & \textbf{Output} & \textbf{Description} \\
+  \hline
+  parse & string & Args & Parses the command arguments to an $Args$ type.\\
+  \hline
+  run & Args & $\mathbbm{Z}$ & Runs the given command based on the data within. Returns the command success code.
+\end{tabular}
+
+\vspace{2em}
+
+\textbf{Definitions}\\
+
+$parse(string):$
+\begin{itemize}
+\item transition:
+  \begin{itemize}
+  \item $help :=$ The help flag is present.
+  \item $dryRun :=$ The dry run flag is present.
+  \item $version :=$ The version flag is present.
+
+  \item $command :=$ The sub command to execute.
+  \end{itemize}
+\item output: $out := Self$
+\item exception: $exc :=$ Parse failure.
+\end{itemize}
+
+\vspace{1em}
+$run(args):$
+\begin{itemize}
+\item output: $out :=$ The command status code. Non-zero if the command failed.
+\item exceptions: None
+\end{itemize}
+
+\subsection{Parser}
+\label{mod:parser}
+This module contains code for reading project definitions and workspace/repo files
+in .yaml, .json or from our Domain Specific Language
+\subsubsection{Uses/Imports}
+\begin{itemize}
+  \item Data Module
+  \item External JSON library
+  \item External YAML library
+\end{itemize}
+
+\subsubsection{Exported Types}
+\begin{itemize}
+  \item Parser = ?
+  \item FileType = {JSON, YAML, DSL}
+\end{itemize}
+
+\subsubsection{Functions}
+\begin{longtable}{l|l|l|l}
+  \textbf{Name} & \textbf{Inputs} & \textbf{Output} & \textbf{Description} \\ \hline
+  decodeProjectDef &
+    String, FileType &
+    ProjectDefinition &
+    \begin{tabular}[c]{@{}l@{}}Takes in a filePath, and a file type,\\decodes the file and returns an\\instance of a ProjectDefinition struct\end{tabular} \\\hline
+  encodeProjectDef &
+  \begin{tabular}[c]{@{}l@{}}ProjectDefinition, \\ string, \\ FileType\end{tabular} &
+    Encoded String &
+    \begin{tabular}[c]{@{}l@{}}Takes in a ProjectDefinition, a file path,\\and a FileType and writes\\the deserialized content to the file.\end{tabular} \\\hline
+  decodeWorkspace &
+    String, FileType &
+    Workspace &
+    \begin{tabular}[c]{@{}l@{}}Takes in a filePath, and a file type,\\decodes the file and returns an\\instance of a Workspace struct\end{tabular} \\\hline
+  encodeWorkspace &
+    \begin{tabular}[c]{@{}l@{}}Workspace, \\String, \\ FileType\end{tabular} &
+    Encoded String &
+    \begin{tabular}[c]{@{}l@{}}Takes in a Workspace, a file path,\\and a FileType and writes the\\deserialized content to the file.\end{tabular}
+  \end{longtable}
+
+  \vspace{2em}
+  \textbf{Definitions}\\
+
+  $decodeProjectDef(content, type):$
+  \begin{itemize}
+  \item output: $out :=$ The serialized ProjectDefinition.
+  \item exception: $exc :=$
+    \begin{align*}
+      \text{ file doesn't exist } &\implies FileNotFound|\\
+      \text{ serialization error } &\implies InvalidFormat|\\
+      True &\implies none
+    \end{align*}
+  \end{itemize}
+
+  \vspace{1em}
+  $encodeProjectDef(def, path, type):$
+  \begin{itemize}
+  \item output: $out :=$ Write to the file the deserialized project definition.
+  \item exception: $exc :=$
+    \begin{align*}
+      \text{ Failed to write } &\implies IOError|\\
+      \text{ Bad path } &\implies IllegalPath|\\
+      \text{ deserialization error } &\implies EncodingErr|\\
+      True &\implies none
+    \end{align*}
+  \end{itemize}
+  \vspace{1em}
+  $decodeWorkspace(content, type):$
+  \begin{itemize}
+  \item output: $out :=$ The serialized Workspace.
+  \item exception: $exc :=$
+    \begin{align*}
+      \text{ file doesn't exist } &\implies FileNotFound|\\
+      \text{ serialization error } &\implies InvalidFormat|\\
+      True &\implies none
+    \end{align*}
+  \end{itemize}
+  \vspace{1em}
+  $encodeWorkspace(def, path, type):$
+  \begin{itemize}
+  \item output: $out :=$ Write to the file the deserialized workspace definition.
+  \item exception: $exc :=$
+    \begin{align*}
+      \text{ Failed to write } &\implies IOError|\\
+      \text{ Bad path } &\implies IllegalPath|\\
+      \text{ deserialization error } &\implies EncodingErr|\\
+      True &\implies none
+    \end{align*}
+  \end{itemize}
+
+% Boiler plate tex for modules, delete before submission
+\subsection{Algorithms}
+\label{mod:alg}
+\subsubsection{Exported Types}
+\begin{itemize}
+\item Schedule = ?
+\item Graph = ?
+\end{itemize}
+\subsubsection{Functions}
+\begin{tabular}{l | l | l | p{7cm} }
+  \textbf{Name} & \textbf{Input} & \textbf{Output} & \textbf{Description} \\
+  \hline
+  scheduleJobs & Graph & Schedule & Returns a scheduling for the job execution based on the given graph \\
+  \hline
+  graphProjects & sec(Project) & Graph & Uses Project to see dependant file(s) and links together as tree, returns
+                                         a dependency graph. \\
+\end{tabular}
+
+\vspace{2em}
+\textbf{Definitions}\\
+
+$scheduleJobs(graph):$
+\begin{itemize}
+\item output: $out :=$ A parallelized schedule to execute jobs while
+  respecting dependencies.
+\item exception: $exc :=$ None.
+\end{itemize}
+
+\vspace{1em}
+$graphProjects(graph):$
+\begin{itemize}
+\item output: $out :=$ The projects dependency graph
+\item exception: $exc :=$ CyclicDependency.
+\end{itemize}
+\subsection{Data}
+\label{mod:data}
+The following modules represent the objects that are used as templates for storing the Project Definition, Workspace, and Target information accordingly. They are all part of the same package.
+
+\begin{enumerate}
+\item ProjectDefinition
+\item Workspace
+\item Target
+\end{enumerate}
+
+\subsubsection{Exported Types}
+\begin{itemize}
+\item ProjectDefinition = ?
+\item ProjectDefintionBuilder = ?
+\item Workspace = ?
+\item WorkspaceBuilder = ?
+\item Target = ?
+\item TargetBuilder = ?
+\end{itemize}
+
+\subsection{Types Members}
+
+Tables showing the data type members. All are assumed to be public as they are
+used to created and validate the definition files. Note that the exact names are
+subject to change.
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}[h!]{l | l | c | l}
+    \textbf{Name} & \textbf{Type} & \textbf{Required} & \textbf{Description}\\
+    \hline
+    mainLanguage & string & True & The main language of the project\\
+    \hline
+    langVersion & string & False & The language version or standard\\
+    \hline
+    name & string & True & The project name\\
+    \hline
+    targets & map[string]Target & True & The list of \glspl{target}. The key is
+                                         the target name\\
+    \hline
+    version & string & False & Project version\\
+    \hline
+    owners & seq(string) & True & The list of project owners/maintainers\\
+    \hline
+    dependsOn & seq(string) & True & The list of project it depends on\\
+    \hline
+    metadata & map[string]string & False & Custom metadata\\
+    \hline
+    affectsTags & seq(string) & True & Tags that this project affects\\
+    \hline
+    affectedByTags & seq(string) & True & Tags that this project is affected by
+  \end{tabular}
+  \caption{The ProjectDefinition}
+  \label{table:proj_def}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}[h!]{l | p{3cm} | c | p{7cm}}
+    \textbf{Name} & \textbf{Type} & \textbf{Required} & \textbf{Description}\\
+    dependsOn & seq(string) & True & Target dependencies\\
+    \hline
+    cmds & seq(string) & True & The commands to run for this target\\
+    \hline
+    artifacts & seq(string) & True & The paths to the generated artifacts, could
+                                     be a directory.\\
+    \hline
+    env & map[string]string | seq(string) & True & Environment variables
+  \end{tabular}
+  \caption{The Target}
+  \label{table:target}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}[h!]{l | l | c | l}
+    \textbf{Name} & \textbf{Type} & \textbf{Required} & \textbf{Description}\\
+    \hline
+    owners & seq(string) & True & The list of repo maintainers.\\
+    \hline
+    appVer & string & True & The program version this file is compatible with.\\
+    \hline
+    projects & seq(string) & True & List of paths to project files.\\
+    \hline
+    tags & seq(string) & True & List of available tabs.\\
+    \hline
+    requiredTargets & seq(string) & True & Required list of targets to be
+                                           defined.\\
+    \hline
+    remoteUrl & string & False & Where is this repo hosted.
+  \end{tabular}
+  \caption{The Workspace}
+  \label{table:workspace}
+\end{table}
+
+\subsubsection{Instantiation}
+We are utilizing a
+\href{https://en.wikipedia.org/wiki/Builder\_pattern}{builder pattern} to
+create the objects. The functions for the builder objects are omitted due to
+their number and simplicity.
+\section{Diagrams}
+\label{sec:diagrams}
+
+\subsection{State Diagram}
+Describes the possible states of the program
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textheight]{diags/state.png}
+  \caption{\label{fig:state}State diagram}
+\end{figure}
+
+\newpage
+\subsection{Activity Diagram}
+
+Note that the activity diagram are broken into pieces for readability on PDF.
+You can follow the figure order.
+
+\subsubsection{Get Affected projects}
+
+Describes how the program gets a list of affected projects.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{0.35\linewidth}
+    \includegraphics[width=\linewidth]{diags/get_affected_activity.png}
+    \caption{Initialize}
+  \end{subfigure}
+  \begin{subfigure}{0.45\linewidth}
+    \includegraphics[width=\linewidth]{diags/get_affected_activity_001.png}
+    \caption{Check Changes}
+  \end{subfigure}
+  \begin{subfigure}{0.5\linewidth}
+    \includegraphics[width=\linewidth]{diags/get_affected_activity_002.png}
+    \caption{Check Dependencies}
+  \end{subfigure}
+  \caption{\label{fig:act_aff}Get a List of Affected Projects}
+\end{figure}
+
+\subsubsection{Execute targets}
+
+Shows the activity of the program when executing projects \gls{target}.
+
+\begin{figure}[htbp]
+
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \begin{subfigure}[b]{\linewidth}
+      \includegraphics[width=\linewidth]{diags/activity.png}
+      \caption{Get user input}
+    \end{subfigure}
+
+    \bigskip
+    \addtocounter{subfigure}{1}
+
+    \begin{subfigure}[b]{\linewidth}
+      \includegraphics[width=\linewidth]{diags/activity_002.png}
+      \caption{Execute}
+    \end{subfigure}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.5\textwidth}
+    \addtocounter{subfigure}{-2}
+    \begin{subfigure}[b]{\linewidth}
+      \includegraphics[width=\linewidth]{diags/activity_001.png}
+      \caption{Initialize}
+    \end{subfigure}
+  \end{minipage}
+
+  \caption{\label{fig:act_exec}Execute Project Targets}
+\end{figure}
+
+\clearpage
+
+\subsubsection{Add Project}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[height=0.6\textheight]{diags/add_proj.png}
+  \caption{Add a new project}
+  \label{fig:new_proj}
+\end{figure}
+
+\newpage
+\subsection{Sample Repository Structure}
+
+Sample project directory structure:
+
+\dirtree{%
+  .1 repo/.
+  .2 .git/.
+  .2 workspace\_def
+  \ldots{}
+  \begin{minipage}[t]{7cm}
+    This file contains information about the entire
+    repository{.}
+  \end{minipage}.
+  .2 path/to/.
+  .3 proj1/.
+  .4 src/...
+  .4 proj\_def
+  \ldots{}
+  \begin{minipage}[t]{7cm}
+    This file contains the project definition as described by
+    the some previous section{.} All targets are executed from
+    this location{.}
+  \end{minipage}.
+  .3 proj2/.
+  .4 src\_file.
+  .4 proj\_def.
+}
+
+\section{Requirements Traceability Matrix}
+
+\begin{tabular}[h!]{c|p{5cm}|p{2cm}| p{4cm}}
+  \textbf{Requirement} & \textbf{Description} & \textbf{Figure or section} & \textbf{Comments} \\
+  \hline
+  1 & Compiled & \ref{sec:lang} & Language choice \\
+  \hline
+  2 & \Gls{CLI} & \ref{mod:command} & \\
+  \hline
+  3 & Add Projects & \ref{mod:command}, \ref{fig:new_proj} & \\
+  \hline
+  4 & Language agnostic & \ref{fig:new_proj}, \ref{table:proj_def} & No design choice assumes the project language. The referenced diagram allows the user to specify the project template to be created.\\
+  \hline
+  5 & Define Target & \ref{mod:data}, \ref{fig:storage}, \ref{table:proj_def}, \ref{table:target} & Allows the user to define them to whatever they like. \\
+  \hline
+  6 & Define dependencies & \ref{fig:storage}, \ref{table:proj_def},
+                            \ref{table:target} & \\
+  \hline
+  7 & Detect changes in dependencies & \ref{mod:command} & Defines the command to do so \\
+  \hline
+  8 & Produce dependency graph & \ref{mod:alg}, \ref{table:proj_def} & \\
+  \hline
+  9 & Define project dependency & \ref{fig:storage}, \ref{table:proj_def} & \\
+  \hline
+  10 & Dependency is respected & \ref{mod:alg}, \ref{table:proj_def} & \\
+  \hline
+  11 & List projects & \ref{mod:command}, \ref{table:workspace}& \\
+  \hline
+  12 & Return status of execution  & \ref{mod:command} & Returns the return code \\
+  \hline
+  13 & Preserve colored output & NA & This is highly dependent on the implementation \\
+  \hline
+  14 & Read project definition & \ref{mod:parser}, \ref{table:proj_def} & \\
+  \hline
+  15 & Detect malformed project definitions & \ref{mod:parser} & Returns an exception \\
+  \hline
+  16 & Project definition information & \ref{table:proj_def} & \\
+  \hline
+  17 & Define custom execution target & \ref{table:target}, \ref{table:proj_def} & \\
+  \hline
+  18 & Execute defined \glspl{target} & \ref{mod:command}, \ref{fig:act_exec}, \ref{table:target} & \\
+  \hline
+  19 & Define output artifact & \ref{table:target} & \\
+  \hline
+  20 & Print target output in realtime & NA & Depends on the implementation \\
+  \hline
+  21 & Execute targets concurrently & \ref{mod:alg} & Provides an execution schedule \\
+  \hline
+  22 & Target should fail if its dependencies fail & \ref{mod:alg}, \ref{table:target} & We can get the dependencies from the execution plan. Also dependent on the implementation\\
+  \hline
+  23 & Cache target execution & \ref{table:target} & Dependent on the implementation. \\
+  \hline
+  24 & Workspace file & \ref{mod:data}, \ref{fig:storage} &
+\end{tabular}
+
+\end{document}

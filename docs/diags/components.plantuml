@@ -1,0 +1,28 @@
+@startuml
+[Common Utils] as utils
+
+utils --> main
+
+component main {
+        [Data] as data
+        [Parser] as parser
+        package "Command Runner" {
+                [Command Parser] as cParse
+                [Command Representation] as cRepr
+                [Runner] as runner
+        }
+        package "Algorithms" {
+                [Graphing] as graph
+                [Scheduling] as sched
+        }
+}
+
+data --> runner
+data --> parser
+parser -> graph
+graph -> sched
+sched --> runner
+cRepr -> cParse
+runner <-- cParse
+
+@enduml

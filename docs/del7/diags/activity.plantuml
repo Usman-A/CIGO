@@ -1,0 +1,79 @@
+@startuml
+start
+:User invokes CLI program;
+:Program reads and parses the command arguments;
+if (command arguments are well formed) then (no)
+        :exit with error message;
+        stop
+else (yes)
+endif
+@enduml
+
+@startuml
+:Attempt to find the workspace defintion.;
+if (found the workspace file) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+:Attempt to parse the workspace information;
+if (Parsed data successfully) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+:Attempt to find the specified
+projects in the workspace;
+if (found the project(s)) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+:Attempt to read and parse the project definitions;
+note left
+        Should be at the location
+        specified by the workspace file
+end note
+if (Found the project definition file) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+
+:Attempt to read and parse the prject definition;
+if (Successfully read and parsed the project definition) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+@enduml
+
+@startuml
+:Find and read the specified targets to execute;
+if (Targets are found) then (no)
+        :Exit with error;
+        stop
+else (yes)
+endif
+
+if (Specified target(s) have dependency) then (yes)
+        :Execute the target's dependency(ies);
+        if (Any of the dependencies fail) then (yes)
+                :Exit and return the error;
+                stop
+        else (no)
+        endif
+else (no)
+endif
+
+:Execute target(s);
+note left
+        Do note reexecute any targets
+        that have been executed as a
+        dependency
+end note
+
+:Print execution summary;
+
+stop
+@enduml

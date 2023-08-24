@@ -1,0 +1,25 @@
+{
+    "owners": ["owner1@example.com", "owner2@example.com"],
+    "appVer": "0.1",
+    "projects": {
+        "proj_a": "apps/proj_a",
+        "proj_b": "apps/proj_b",
+        "proj_c": "apps/proj_c",
+        "proj_d": "apps/proj_d"
+    },
+    "tags": [
+        "node",
+        "client",
+        "server",
+        "serverless",
+        "db",
+        "infastructure"
+    ],
+    "requiredTargets": [
+        "build",
+        "test",
+        "deploy",
+        "init"
+    ],
+    "remoteUrl": "https://github.com/user/repo"
+}

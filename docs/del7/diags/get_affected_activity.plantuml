@@ -1,0 +1,31 @@
+@startuml
+start
+:User calls the program;
+:Program attempts to read the workspace
+file;
+@enduml
+@startuml
+if (Git is installed) then (yes)
+        :Get base ref to check against;
+        :Use `git` to check changed files;
+        :Compare the list of files with the project paths
+        and get the list of directly affected projects;
+else (no)
+        :Exit with error;
+        stop
+endif
+@enduml
+@startuml
+:Read the project definitions to
+get the list of projects that depend
+on the affected project list;
+
+:Add the dependants to the affecte list;
+
+:Print list of affected projects;
+note left
+        We should consider a parsable format
+end note
+
+stop
+@enduml

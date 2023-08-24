@@ -1,0 +1,54 @@
+{
+    "mainLanguage": "cpp",
+    "lanVersion": "16",
+    "name": "proj_d",
+    "targets": {
+        "build": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "init"
+            }],
+            "cmds": ["echo building application", "echo done building proj_d"],
+            "artifacts": [],
+            "env": {}
+        },
+        "init": {
+            "dependsOn": [],
+            "cmds": [
+                "echo initializing proj_d"
+            ],
+            "artifacts": ["test.txt"],
+            "env": {}
+        },
+        "test": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "build"
+            }],
+            "cmds": [
+                "echo testing proj_d"
+            ],
+            "artifacts": [],
+            "env": {}
+        },
+        "deploy": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "test"
+            }],
+            "cmds": [
+                "echo deploying proj_d"
+            ],
+            "artifacts": [],
+            "env": {
+                "HOST": "FAKE_HOST"
+            }
+        }
+    },
+    "version": "1.2",
+    "owners": ["owner1@example.com"],
+    "dependsOn": [],
+    "metadata": {"knowledge": "expert"},
+    "affectsTags": ["db"],
+    "affectedByTags": ["server"]
+}

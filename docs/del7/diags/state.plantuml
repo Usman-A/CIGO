@@ -1,0 +1,44 @@
+@startuml
+hide empty description
+state "Execute command" as exec
+exec: Executes whatever command the
+exec: user passed to the program
+
+state "Return" as end
+end: Print summary and return status code
+end: Non-zero if any command failed to execute
+
+state "Initialization" as init{
+        state "Parse command" as p_command
+        state "Searching for `workspace` file" as find_w
+        find_w: Should be in the same or a parent dir
+
+        state "Parsing and reading `workspace` file" as parse_w
+        state "Find project files" as find_p
+        find_p: path specified in the `workspace` file
+
+        state "Parse project files" as parse_p
+
+        state "Initialisation failure" as init_fail
+
+        [*] --> p_command
+        p_command --> find_w
+        find_w --> parse_w: Found workspace file
+        parse_w --> find_p
+        find_p --> parse_p: Found project files
+
+        find_w --> exec: If project information is not required
+        parse_p --> exec: If parsed successfully
+
+        find_w -> init_fail: If could not find the file
+        parse_w -> init_fail: If could not parse the file
+        find_p -> init_fail: If could not find the requested project file
+        parse_p -> init_fail: If failed to parse any of the project files
+
+        init_fail --> end
+}
+
+
+[*] --> init
+exec --> end
+@enduml

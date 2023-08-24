@@ -1,0 +1,18 @@
+@startuml
+
+:Get User input;
+:Check the target directory is empty;
+if (Directory is empty) then (no)
+        :Exit with error;
+        stop
+endif
+:Check for template;
+if (The template exists?) then (Yes)
+        :Validate all template params;
+        :Create files in the target directory;
+else (no)
+        :Create basic project;
+endif
+:Add project to the workspace directory;
+stop
+@enduml

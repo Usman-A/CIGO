@@ -1,0 +1,111 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$ref": "#/$defs/ProjectDefinition",
+    "$defs": {
+        "ProjectDefinition": {
+            "properties": {
+                "MainLanguage": {
+                    "type": "string"
+                },
+                "LangVersion": {
+                    "type": "string"
+                },
+                "Name": {
+                    "type": "string"
+                },
+                "Targets": {
+                    "patternProperties": {
+                        ".*": {
+                            "$ref": "#/$defs/Target"
+                        }
+                    },
+                    "type": "object"
+                },
+                "Version": {
+                    "type": "string"
+                },
+                "Owners": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "DependsOn": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "Metadata": {
+                    "patternProperties": {
+                        ".*": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "AffectsTags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "AffectedByTags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": ["MainLanguage", "LangVersion", "Name", "Targets", "Version", "Owners", "DependsOn", "Metadata", "AffectsTags", "AffectedByTags"]
+        },
+        "Target": {
+            "properties": {
+                "DependsOn": {
+                    "items": {
+                        "$ref": "#/$defs/DependsTarget"
+                    },
+                    "type": "array"
+                },
+                "Cmds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "Artifacts": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "Env": {
+                    "patternProperties": {
+                        ".*": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": ["DependsOn", "Cmds", "Artifacts", "Env"]
+        },
+        "DependsTarget": {
+            "properties": {
+                "Project": {
+                    "type": "string"
+                },
+                "Target": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": ["Project", "Target"]
+        }
+    }
+}

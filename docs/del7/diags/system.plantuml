@@ -1,0 +1,25 @@
+@startuml
+agent CIGO as cigo
+database Data as data {
+        file "Project Definition" as proj {
+                json jsonP {
+                        "name": "projectName",
+                        "language": "python",
+                        "targets": ["..."],
+                        "...": []
+                }
+        }
+        file "Workspace Definition" as workspace {
+                json jsonW {
+                        "version": "0.1",
+                        "maintainers": ["user1", "user2"],
+                        "projects": ["path/to/proj1", "path/to/proj2", "..."],
+                        "...": []
+                }
+        }
+        jsonW -> proj: Has path to
+}
+
+cigo --> data: Reads and writes to
+
+@enduml

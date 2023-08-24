@@ -1,0 +1,1276 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>commands: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">4zp6/cigo/pkg/commands/addProject.go (83.8%)</option>
+				
+				<option value="file1">4zp6/cigo/pkg/commands/affected.go (87.9%)</option>
+				
+				<option value="file2">4zp6/cigo/pkg/commands/caching.go (61.5%)</option>
+				
+				<option value="file3">4zp6/cigo/pkg/commands/list.go (80.0%)</option>
+				
+				<option value="file4">4zp6/cigo/pkg/commands/run.go (61.3%)</option>
+				
+				<option value="file5">4zp6/cigo/pkg/commands/schema.go (66.7%)</option>
+				
+				<option value="file6">4zp6/cigo/pkg/commands/search.go (90.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/customErrors"
+        "4zp6/cigo/pkg/data"
+        "4zp6/cigo/pkg/misc"
+        "4zp6/cigo/pkg/parser"
+        "errors"
+        "fmt"
+        "os"
+        p "path"
+        "strings"
+
+        input "github.com/tcnksm/go-input"
+)
+
+var workspace *data.Workspace
+
+func targetPrompt(user *input.UI, workspace data.Workspace) (map[string]data.Target, error) <span class="cov8" title="1">{
+        targetMap := make(map[string]data.Target)
+
+        create, err := user.Select("Do you want to add a target?", []string{"Yes", "No"}, &amp;input.Options{
+                Default:   "No",
+                Required:  true,
+                Loop:      true,
+                HideOrder: true,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">for create == "Yes" </span><span class="cov8" title="1">{
+                builder := data.TargetBuilder{}
+
+                // Get the name of the target
+                name, err := user.Ask("What's the name of the target?", &amp;input.Options{
+                        Default:   "target",
+                        Required:  true,
+                        Loop:      true,
+                        HideOrder: true,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                // Get the commands the project has
+                <span class="cov8" title="1">commands, err := user.Ask("What command(s) does the target have? Separate commands with a ','", &amp;input.Options{
+                        Default:   "test build run",
+                        Required:  true,
+                        Loop:      true,
+                        HideOrder: true,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">commandList := strings.Split(commands, ",")
+                builder.SetCmds(commandList)
+
+                artifacts, err := user.Ask("What artifact(s) does the target have? Separate items with a space.", &amp;input.Options{
+                        Default:   "",
+                        Required:  true,
+                        Loop:      true,
+                        HideOrder: true,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">artifactList := strings.Split(artifacts, " ")
+                builder.SetArtifacts(artifactList)
+
+                envMap := make(map[string]string)
+                _, err = user.Ask("What environment variables does the target have? Use &lt;key&gt;&gt;:&lt;value&gt; pairs separated by a colon", &amp;input.Options{
+                        Default:   "",
+                        Required:  false,
+                        Loop:      true,
+                        HideOrder: true,
+                        ValidateFunc: func(metadata string) error </span><span class="cov8" title="1">{
+                                envList := strings.Split(metadata, " ")
+                                if len(envList) == 1 &amp;&amp; envList[0] == "" </span><span class="cov8" title="1">{
+                                        return nil
+                                }</span>
+                                <span class="cov8" title="1">for _, item := range envList </span><span class="cov8" title="1">{
+                                        split := strings.Split(item, ":")
+                                        if len(split) != 2 </span><span class="cov8" title="1">{
+                                                return fmt.Errorf("Invalid environment variable format, should be '&lt;key&gt;:&lt;value&gt;'")
+                                        }</span>
+                                        <span class="cov8" title="1">envMap[split[0]] = split[1]</span>
+                                }
+                                <span class="cov8" title="1">return nil</span>
+                        },
+                })
+                <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">builder.SetEnv(envMap)
+
+                // get dependencies for the target
+                d, err := user.Select("Does the target have any dependencies?", []string{"Yes", "No"}, &amp;input.Options{
+                        Default:   "No",
+                        Required:  true,
+                        Loop:      true,
+                        HideOrder: true,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">if d == "Yes" </span><span class="cov8" title="1">{
+                        dependencies := []data.DependsTarget{}
+                        for d == "Yes" </span><span class="cov8" title="1">{
+                                project, err := user.Ask("Which project does the dependant target belong to?", &amp;input.Options{
+                                        Default:   "",
+                                        Required:  true,
+                                        Loop:      true,
+                                        HideOrder: true,
+                                        ValidateFunc: func(project string) error </span><span class="cov8" title="1">{
+                                                if _, ok := workspace.Projects[project]; !ok </span><span class="cov8" title="1">{
+                                                        return fmt.Errorf("Project '%s' cannot be found in the workspace", project)
+                                                }</span>
+                                                <span class="cov8" title="1">return nil</span>
+                                        },
+                                })
+                                <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                                        return nil, err
+                                }</span>
+                                <span class="cov8" title="1">target, err := user.Ask("What is target does it depend on? (Enter the name)", &amp;input.Options{
+                                        Default:   "",
+                                        Required:  true,
+                                        Loop:      true,
+                                        HideOrder: true,
+                                        ValidateFunc: func(target string) error </span><span class="cov8" title="1">{
+                                                pPath, err := misc.GetRelativePath(workspace.Projects[project] + "/project.json")
+                                                if err != nil </span><span class="cov0" title="0">{
+                                                        return err
+                                                }</span>
+
+                                                <span class="cov8" title="1">proj, err := parser.DecodeProjectDef(pPath, parser.JSON)
+                                                if err != nil </span><span class="cov0" title="0">{
+                                                        return err
+                                                }</span>
+
+                                                <span class="cov8" title="1">if _, ok := proj.Targets[target]; !ok </span><span class="cov8" title="1">{
+                                                        return fmt.Errorf("Target '%s' does not exist in project %s.", target, project)
+                                                }</span>
+                                                <span class="cov8" title="1">return nil</span>
+                                        },
+                                })
+                                <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                                        return nil, err
+                                }</span>
+                                <span class="cov8" title="1">dependencies = append(dependencies, data.DependsTarget{Project: project, Target: target})
+
+                                d, err = user.Select("Do you want to add another dependency?", []string{"Yes", "No"}, &amp;input.Options{
+                                        Default:   "No",
+                                        Required:  true,
+                                        Loop:      true,
+                                        HideOrder: true,
+                                })
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return nil, err
+                                }</span>
+                        }
+                        <span class="cov8" title="1">builder.SetDependsOn(dependencies)</span>
+                }
+
+                <span class="cov8" title="1">create, err = user.Select("Would you like to add another target?", []string{"Yes", "No"}, &amp;input.Options{
+                        Default:   "No",
+                        Required:  true,
+                        Loop:      true,
+                        HideOrder: true,
+                })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">targetMap[name] = builder.Build()</span>
+        }
+        <span class="cov8" title="1">return targetMap, nil</span>
+}
+
+func tagValidator(tag string) error <span class="cov8" title="1">{
+        // if the tag is empty, then we don't need to validate it as it is an optional field
+        if tag == "" </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">tagList := strings.Split(tag, " ")
+        for _, t := range tagList </span><span class="cov8" title="1">{
+                if contains(workspace.Tags, t) </span><span class="cov8" title="1">{
+                        continue</span>
+                } else<span class="cov8" title="1"> {
+                        return fmt.Errorf("Tag '%s' does not exist", t)
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+// Wizard to add a new project to the workspace
+func AddProject(user *input.UI) error <span class="cov8" title="1">{
+        projBuilder := data.ProjectDefinitionBuilder{}
+        workspacePath, err := misc.GetWorkspacePath()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">workspace, err = parser.DecodeWorkspace(workspacePath, parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">skip := "\nIf you would like to skip this step press enter, otherwise enter a value"
+
+        // Get the name of the project
+        name, err := user.Ask("What's the name of the project?", &amp;input.Options{
+                Default:   "my_project",
+                Required:  true,
+                Loop:      true,
+                HideOrder: true,
+                ValidateFunc: func(name string) error </span><span class="cov8" title="1">{
+                        // name can't end with or contain a space
+                        if strings.HasPrefix(name, " ") || strings.HasSuffix(name, " ") </span><span class="cov8" title="1">{
+                                return fmt.Errorf("Project name cannot start or end with a space")
+                        }</span>
+                        <span class="cov8" title="1">if strings.Contains(name, " ") </span><span class="cov8" title="1">{
+                                return fmt.Errorf("Project name cannot contain a space")
+                        }</span>
+                        <span class="cov8" title="1">if _, ok := workspace.Projects[name]; ok </span><span class="cov8" title="1">{
+                                return fmt.Errorf("Project with name %s already exists", name)
+                        }</span>
+                        <span class="cov8" title="1">return nil</span>
+                },
+        })
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetName(name)
+
+        //Need the path of the project
+        path, err := user.
+                Ask("What's the path of where the project is stored?\n"+
+                        "The path would be the folder containing the project folder, e.g. 'apps/' "+
+                        "and within this folder you would have your project folder.",
+                        &amp;input.Options{
+                                Default:   "apps/",
+                                Required:  true,
+                                Loop:      true,
+                                HideOrder: true,
+                                ValidateFunc: func(path string) error </span><span class="cov8" title="1">{
+                                        //make sure it doesnt start with a /, this is because we will be appending a / to the path
+                                        if strings.HasPrefix(path, "/") </span><span class="cov8" title="1">{
+                                                return fmt.Errorf("Path cannot start with a '/'")
+                                        }</span>
+                                        <span class="cov8" title="1">return nil</span>
+                                },
+                        })
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Get Project version
+        <span class="cov8" title="1">version, err := user.Ask("What's the version of the project?", &amp;input.Options{
+                Default:   "0.1.0",
+                Required:  false,
+                Loop:      true,
+                HideOrder: true,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetVersion(version)
+
+        // Get the language name
+        language, err := user.Ask("What's the language of the project? This information would help build the project later on.", &amp;input.Options{
+                Default:   "go",
+                Required:  true,
+                Loop:      true,
+                HideOrder: true,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetMainLanguage(language)
+
+        // Get language version
+        langVersion, err := user.Ask("What's the version of the language?", &amp;input.Options{
+                Default:   "LATEST",
+                Required:  false,
+                Loop:      true,
+                HideOrder: true,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetLangVersion(langVersion)
+
+        // Get Targets
+        targets, err := targetPrompt(user, *workspace)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetTargets(targets)
+
+        fmt.Println("Note: the following items are lists, separate each item with a space")
+        // get owners
+        owners, err := user.Ask("Who are the owner(s) of this project? (Eg. 'elon_musk kobe')", &amp;input.Options{
+                Default:   "",
+                Required:  true,
+                Loop:      true,
+                HideOrder: true,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">ownersList := strings.Split(owners, " ")
+        projBuilder.SetOwners(ownersList)
+
+        var dependsOnList []string
+        // get the dependencies
+        _, err = user.Ask("Which project(s) does this project depend on? (Eg. 'proj_a proj_d')", &amp;input.Options{
+                Default:   "",
+                Required:  false,
+                Loop:      true,
+                HideOrder: true,
+                ValidateFunc: func(dep string) error </span><span class="cov8" title="1">{
+                        if dep == "" </span><span class="cov8" title="1">{
+                                dependsOnList = []string{}
+                                return nil
+                        }</span>
+                        <span class="cov8" title="1">dependsOnList = strings.Split(dep, " ")
+                        for _, d := range dependsOnList </span><span class="cov8" title="1">{
+                                if d == name </span><span class="cov8" title="1">{
+                                        dependsOnList = []string{}
+                                        return fmt.Errorf("Project cannot depend on itself")
+                                }</span>
+                                <span class="cov8" title="1">if _, ok := workspace.Projects[d]; !ok </span><span class="cov8" title="1">{
+                                        dependsOnList = []string{}
+                                        return fmt.Errorf("Project with name '%s' does not exist", d)
+                                }</span>
+                        }
+                        <span class="cov8" title="1">return nil</span>
+                },
+        })
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetDependsOn(dependsOnList)
+
+        // get affects tags
+        affects, err := user.Ask("Which tag(s) does this project affect? (Eg. 'client server db')"+skip, &amp;input.Options{
+                Default:      "",
+                Required:     false,
+                Loop:         true,
+                HideOrder:    true,
+                ValidateFunc: tagValidator,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">affectsList := strings.Split(affects, " ")
+        projBuilder.SetAffectsTags(affectsList)
+
+        // get affected by tags
+        affectedBy, err := user.Ask("Which tag(s) is this project affected by? (Eg, 'node db')"+skip, &amp;input.Options{
+                Default:      "",
+                Required:     false,
+                Loop:         true,
+                HideOrder:    true,
+                ValidateFunc: tagValidator,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">affectedByList := strings.Split(affectedBy, " ")
+        projBuilder.SetAffectedByTags(affectedByList)
+
+        // get custom metadata
+        metadataMap := make(map[string]string)
+        _, err = user.Ask("What custom metadata do you want to add? (Eg.'&lt;key1&gt;:&lt;val1&gt; &lt;key2&gt;:&lt;val2&gt; ...')"+skip, &amp;input.Options{
+                Default:   "",
+                Required:  false,
+                Loop:      true,
+                HideOrder: true,
+                ValidateFunc: func(metadata string) error </span><span class="cov8" title="1">{
+                        metadataList := strings.Split(metadata, " ")
+                        if len(metadataList) == 1 &amp;&amp; metadataList[0] == "" </span><span class="cov0" title="0">{
+                                return nil
+                        }</span>
+                        <span class="cov8" title="1">for _, item := range metadataList </span><span class="cov8" title="1">{
+                                split := strings.Split(item, ":")
+                                if len(split) != 2 </span><span class="cov8" title="1">{
+                                        return fmt.Errorf("Invalid metadata format, should be '&lt;key&gt;:&lt;val&gt;'")
+                                }</span>
+                                // generating metadata to reduce computation, if this passes validation then we won't need
+                                // to run the function again to generate the metadata map
+                                <span class="cov8" title="1">metadataMap[split[0]] = split[1]</span>
+                        }
+                        <span class="cov8" title="1">return nil</span>
+                },
+        })
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">projBuilder.SetMetadata(metadataMap)
+
+        proj := projBuilder.Build()
+
+        // add project to the workspace
+        workspace.Projects[name] = p.Join(path, name)
+
+        // write the workspace
+        err = parser.EncodeWorkspace(*workspace, workspacePath, parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">fmt.Println("Workspace updated successfully")
+
+        path, err = misc.GetRelativePath(workspace.Projects[name])
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">err = parser.EncodeProjectDef(proj, path+"/project.json", parser.JSON)
+        if err != nil </span><span class="cov8" title="1">{
+                // if illegal path error
+                pathErr := new(customErrors.IllegalPathError)
+                if errors.As(err, &amp;pathErr) </span><span class="cov8" title="1">{
+                        //create the path and try again
+                        fmt.Println("Path `" + workspace.Projects[name] + "` doesn't exist, creating it...")
+                        err = os.MkdirAll(path, os.ModePerm)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return fmt.Errorf("Failed to create path: %s", err)
+                        }</span>
+                        <span class="cov8" title="1">err = parser.EncodeProjectDef(proj, path+"/project.json", parser.JSON)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return fmt.Errorf("Failed to parse project.json: %s", err)
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">fmt.Println("Project created successfully")
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/algorithms"
+        "4zp6/cigo/pkg/misc"
+        "4zp6/cigo/pkg/parser"
+        "os/exec"
+        "strings"
+)
+
+func GetAffected(branch string, head string) (projects []string, err error) <span class="cov8" title="1">{
+
+        cmd := exec.Command("git", "--no-pager", "diff", "--name-only", branch, head)
+        out, err := cmd.Output()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">wsPath, err := misc.GetWorkspacePath()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">ws, err := parser.DecodeWorkspace(wsPath, parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">paths := strings.Split(string(out), "\n")
+
+        // get projects affected explicitly
+        for k, p := range ws.Projects </span><span class="cov8" title="1">{
+                for _, f := range paths </span><span class="cov8" title="1">{
+                        if strings.HasPrefix(f, p) </span><span class="cov8" title="1">{
+                                projects = append(projects, k)
+                                break</span>
+                        }
+                }
+        }
+
+        // get projects affected via dependencies
+        <span class="cov8" title="1">graph := algorithms.GetGraph()
+        toAdd := make([]string, 0)
+        for _, p := range projects </span><span class="cov8" title="1">{
+                deps, err := graph.GetProjectDependencies(p)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">toAdd = append(toAdd, deps...)</span>
+        }
+        <span class="cov8" title="1">projects = append(projects, toAdd...)
+
+        // remove duplicates
+        projects = removeDuplicates(projects)
+
+        return projects, nil</span>
+}
+
+func removeDuplicates(elements []string) []string <span class="cov8" title="1">{
+        encountered := map[string]bool{}
+        result := []string{}
+
+        for _, v := range elements </span><span class="cov8" title="1">{
+                if !encountered[v] </span><span class="cov8" title="1">{
+                        encountered[v] = true
+                        result = append(result, v)
+                }</span>
+        }
+
+        <span class="cov8" title="1">return result</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/data"
+        "4zp6/cigo/pkg/misc"
+        "bytes"
+        "crypto/sha256"
+        "encoding/json"
+        "errors"
+        "fmt"
+        "hash"
+        "os"
+        "os/exec"
+        "path/filepath"
+        "sort"
+        "strings"
+)
+
+const HASHE_DATA_LOCATION = "/tmp/cigo/hashes.json"
+
+type Caching struct {
+        Hashes map[string]Hashes
+}
+
+type Hashes struct {
+        projectHash   []byte
+        artifactsHash []byte
+}
+
+// Path: src/pkg/commands/caching.go
+// Name: IsCached
+// Description: checks if the project is cached
+// Parameters:
+//   - projectPath: the path to the project
+//   - target: the execution target to check
+//
+// Returns:
+//   - bool: true if the project is cached, false otherwise
+//   - error: any errors that occur
+func IsCached(projectPath string, target data.Target) (bool, error) <span class="cov8" title="1">{
+
+        // read the hashes file and check if the project is cached
+        var cache Caching
+        cacheData, err := os.ReadFile(HASHE_DATA_LOCATION)
+        if err != nil </span><span class="cov0" title="0">{
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        return false, nil
+                }</span>
+                <span class="cov0" title="0">return false, err</span>
+        }
+        <span class="cov8" title="1">err = json.Unmarshal(cacheData, &amp;cache)
+        if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+        <span class="cov8" title="1">if _, ok := cache.Hashes[projectPath]; !ok </span><span class="cov0" title="0">{
+                return false, nil
+
+        }</span>
+
+        // get the checksums of the project and the target artifacts
+        <span class="cov8" title="1">hashes, err := getChecksums(projectPath, target)
+        if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+
+        // compare the checksum
+        <span class="cov8" title="1">if bytes.Equal(cache.Hashes[projectPath].projectHash, hashes.projectHash) &amp;&amp;
+                bytes.Equal(cache.Hashes[projectPath].artifactsHash, hashes.artifactsHash) </span><span class="cov0" title="0">{
+                return true, nil
+        }</span>
+
+        <span class="cov8" title="1">return false, nil</span>
+}
+
+// Path: src/pkg/commands/caching.go
+// Name: getChecksums
+// Description: gets the checksums of the project and the target artifacts
+// Parameters:
+//   - projectPath: the path to the project
+//   - target: the target to get the checksums for
+//
+// Returns:
+//   - *Hashes: the checksums of the project and the target artifacts
+//   - error: any errors that occur
+func getChecksums(projectPath string, target data.Target) (*Hashes, error) <span class="cov8" title="1">{
+
+        var hashes Hashes
+        // get files tracked by git
+        // NOTE: this is not the best way to do this, but it is the easiest
+        //       consider using git2go or go-git
+        cmd := exec.Command("git", "ls-tree", "-r", "HEAD", "--name-only")
+        root, err := misc.GetRoot()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Failed to get repo root: %v\n", err)
+        }</span>
+        <span class="cov8" title="1">cmd.Dir = root
+        out, err := cmd.Output()
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Failed to get tracked files: %v\n", err)
+        }</span>
+
+        // split the output into paths
+        <span class="cov8" title="1">paths := strings.Split(string(out), "\n")
+
+        projectPaths := []string{}
+        for _, path := range paths </span><span class="cov8" title="1">{
+                if strings.HasPrefix(path, projectPath) </span><span class="cov0" title="0">{
+                        projectPaths = append(projectPaths, path)
+                }</span>
+        }
+
+        <span class="cov8" title="1">sha256 := sha256.New()
+
+        projectCheckSum, err := checkSumFiles(projectPaths, sha256)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Failed to get the project files checksum: %v\n", err)
+        }</span>
+
+        <span class="cov8" title="1">var artifactsCheckSum []byte = []byte{}
+        artifactFiles := []string{}
+        // sort the artifacts so that the checksum is consistent
+        sort.StringSlice(target.Artifacts).Sort()
+        for _, artifact := range target.Artifacts </span><span class="cov0" title="0">{
+                // check if it is a file or a directory
+                fileInfo, err := os.Stat(artifact)
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("Failed to get the artifact directory stats: %v\n", err)
+                }</span>
+
+                <span class="cov0" title="0">if fileInfo.IsDir() </span><span class="cov0" title="0">{
+                        sum, err := checkSumDirectory(artifact, sha256)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("Failed to get the artifact directory checksum: %v\n", err)
+                        }</span>
+                        <span class="cov0" title="0">artifactsCheckSum = append(artifactsCheckSum, sum...)</span>
+                } else<span class="cov0" title="0"> {
+                        root, err := misc.GetRoot()
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, fmt.Errorf("Failed to get repo root: %v\n", err)
+                        }</span>
+                        <span class="cov0" title="0">artifactFiles = append(artifactFiles, filepath.Join(root, artifact))</span>
+                }
+        }
+
+        // get the checksum of the artifacts
+        <span class="cov8" title="1">sum, err := checkSumFiles(artifactFiles, sha256)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Failed to get the artifact files stats: %v\n", err)
+        }</span>
+
+        <span class="cov8" title="1">artifactsCheckSum = append(artifactsCheckSum, sum...)
+        artifactsCheckSum = sha256.Sum(artifactsCheckSum)
+
+        hashes.projectHash = projectCheckSum
+        hashes.artifactsHash = artifactsCheckSum
+
+        return &amp;hashes, nil</span>
+}
+
+// Path: src/pkg/commands/caching.go
+// Name: checkSumDirectory
+// Description: gets the checksum of all files in a directory
+// Parameters:
+//   - dirPath: the path to the directory, relative to the repository
+//
+// Returns:
+//   - []byte: the checksum of all files in the directory
+//   - error: any errors that occur
+func checkSumDirectory(dirPath string, sha256 hash.Hash) ([]byte, error) <span class="cov8" title="1">{
+        relPath, err := misc.GetRelativePath(dirPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">files, err := os.ReadDir(relPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">filePaths := make([]string, len(files))
+        for i, file := range files </span><span class="cov8" title="1">{
+                filePaths[i] = filepath.Join(relPath, file.Name())
+        }</span>
+
+        <span class="cov8" title="1">return checkSumFiles(filePaths, sha256)</span>
+}
+
+// Path: src/pkg/commands/caching.go
+// Name: checkSumFiles
+// Description: gets the checksum of all files in a list of paths
+// Parameters:
+//   - filePath: the paths to the files, absolute
+//
+// Returns:
+//   - []byte: the checksum of all files in the list of paths
+//   - error: any errors that occur
+func checkSumFiles(filePaths []string, sha256 hash.Hash) ([]byte, error) <span class="cov8" title="1">{
+
+        sort.StringSlice(filePaths).Sort()
+        var runningCheckSum []byte = []byte{}
+        for _, file := range filePaths </span><span class="cov8" title="1">{
+                data, err := os.ReadFile(file)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+
+                <span class="cov8" title="1">sum := sha256.Sum(data)
+                runningCheckSum = append(runningCheckSum, sum...)</span>
+        }
+
+        <span class="cov8" title="1">return sha256.Sum(runningCheckSum), nil</span>
+}
+
+// Path: src/pkg/commands/caching.go
+// Name: CacheTarget
+// Description: caches the target artifacts
+// Parameters:
+//   - projectPath: the path to the project
+//   - target: the target to cache
+//
+// Returns:
+//   - error: any errors that occur
+func CacheTarget(projectPath string, target data.Target) error <span class="cov8" title="1">{
+        hashes, err := getChecksums(projectPath, target)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">var cache Caching
+
+        cachedData, err := os.ReadFile(HASHE_DATA_LOCATION)
+        if err == nil </span><span class="cov8" title="1">{
+                err = json.Unmarshal(cachedData, &amp;cache)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+        } else<span class="cov0" title="0"> if errors.Is(err, os.ErrNotExist) </span><span class="cov0" title="0">{
+                path := filepath.Dir(HASHE_DATA_LOCATION)
+                err = os.MkdirAll(path, 0755)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+                <span class="cov0" title="0">cache = Caching{
+                        Hashes: map[string]Hashes{},
+                }</span>
+        } else<span class="cov0" title="0"> {
+                return err
+        }</span>
+
+        <span class="cov8" title="1">cache.Hashes[projectPath] = *hashes
+
+        data, err := json.Marshal(cache)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">err = os.WriteFile(HASHE_DATA_LOCATION, data, 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/misc"
+        "4zp6/cigo/pkg/parser"
+        "fmt"
+        "strings"
+)
+
+// Prints the list to the output directly
+func List() error <span class="cov8" title="1">{
+        // read the workspace directory
+        root, err := misc.GetRoot()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">workspace, err := parser.DecodeWorkspace(strings.TrimSpace(root)+"/workspace.json", parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">fmt.Println("\nProjects in this workspace:")
+        for name := range workspace.Projects </span><span class="cov8" title="1">{
+                fmt.Printf("\t%s\n", name)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/algorithms"
+        "4zp6/cigo/pkg/misc"
+        "4zp6/cigo/pkg/parser"
+        "errors"
+        "fmt"
+        "os"
+        "os/exec"
+        "strings"
+        "sync"
+
+        "github.com/gookit/color"
+)
+
+func Run(project string, target string, dryRun bool) error <span class="cov8" title="1">{
+
+        graph, err := algorithms.GetGraph().GraphTargets(project, target)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">s, err := algorithms.CreateScheduler(graph)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">var (
+                wait sync.WaitGroup
+                done = make(chan bool, s.Size())
+        )
+
+        wsPath, err := misc.GetWorkspacePath()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">ws, err := parser.DecodeWorkspace(wsPath, parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">var runErr error = nil
+
+        for s.Size() &gt; 0 </span><span class="cov8" title="1">{
+                next, err := s.Next()
+                if err == nil &amp;&amp; next != "" </span><span class="cov8" title="1">{
+                        wait.Add(1)
+                        go func() </span><span class="cov8" title="1">{
+                                t := strings.Split(next, "/")
+                                // these should be the inputs of the function
+                                project := t[0]
+                                targetStr := t[1]
+                                defer s.Done(project, targetStr)
+                                defer func() </span><span class="cov8" title="1">{ done &lt;- true }</span>()
+                                <span class="cov8" title="1">defer wait.Done()
+
+                                target, err := graph.Vertex(next)
+                                if err != nil </span><span class="cov0" title="0">{
+                                        if runErr == nil </span><span class="cov0" title="0">{
+                                                runErr = fmt.Errorf("Errors faced when running commands: \n")
+                                        }</span>
+                                        <span class="cov0" title="0">runErr = errors.New(runErr.Error() + "\t" + err.Error())
+                                        return</span>
+                                }
+
+                                // Check if the target is cached
+                                <span class="cov8" title="1">if len(target.Target.Artifacts) &gt; 0 </span><span class="cov0" title="0">{
+                                        isCached, err := IsCached(target.Project, target.Target)
+                                        if err != nil </span><span class="cov0" title="0">{
+                                                if runErr == nil </span><span class="cov0" title="0">{
+                                                        runErr = fmt.Errorf("Errors faced when running commands: \n")
+                                                }</span>
+                                                <span class="cov0" title="0">runErr = errors.New(runErr.Error() + "\t" + err.Error())
+                                                return</span>
+                                        }
+                                        <span class="cov0" title="0">if isCached </span><span class="cov0" title="0">{
+                                                fmt.Printf("Target %s for project %s is cached. Skipping execution.\n", target.Name, target.Project)
+                                                return
+                                        }</span>
+                                }
+
+                                // Put the environment variables into the correct format
+                                <span class="cov8" title="1">env := []string{}
+                                for k, v := range target.Target.Env </span><span class="cov0" title="0">{
+                                        env = append(env, fmt.Sprintf("%s=%s", k, v))
+                                }</span>
+
+                                // run the target
+                                // Run all the commands in the target
+                                <span class="cov8" title="1">color.Infof("Executing %s for %s:\n", target.Name, target.Project)
+                                for _, v := range target.Target.Cmds </span><span class="cov8" title="1">{
+                                        t := strings.Split(v, " ")
+                                        cmd := exec.Command(t[0], t...)
+                                        cmd.Env = env
+                                        dir, err := misc.GetRelativePath(ws.Projects[project])
+                                        if err != nil </span><span class="cov0" title="0">{
+                                                if runErr == nil </span><span class="cov0" title="0">{
+                                                        runErr = fmt.Errorf("Errors faced when running commands: \n")
+                                                }</span>
+                                                <span class="cov0" title="0">runErr = errors.New(runErr.Error() + "\t" + err.Error())
+                                                return</span>
+                                        }
+                                        // set the current directory as the project directory
+                                        <span class="cov8" title="1">cmd.Dir = dir
+                                        // set the output to the terminal
+                                        cmd.Stderr = os.Stderr
+                                        cmd.Stdout = os.Stdout
+
+                                        //  run the command
+                                        // if the dryRun flag is set, don't actually run the command
+                                        // just print it
+                                        if dryRun </span><span class="cov0" title="0">{
+                                                color.Infof("Dry run: %s\n", cmd.String())
+                                        }</span> else<span class="cov8" title="1"> {
+                                                // run the command
+                                                // NOTE: I don't think this needed. Should use cmd.Run() instead
+                                                err = cmd.Run()
+                                        }</span>
+
+                                        // if there is an error, print it
+                                        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                                                if runErr == nil </span><span class="cov0" title="0">{
+                                                        runErr = fmt.Errorf("Errors faced when running commands: \n")
+                                                }</span>
+                                                <span class="cov0" title="0">runErr = errors.New(runErr.Error() + "\t" + err.Error())
+                                                color.Errorf("Error while executing %s for %s\n", target.Name, target.Project)
+                                                return</span>
+                                        }
+                                }
+                                <span class="cov8" title="1">color.Successf("Finished execution.\n\n")</span>
+                        }()
+
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">&lt;-done
+                for len(done) &gt; 0 </span><span class="cov0" title="0">{
+                        &lt;-done
+                }</span>
+        }
+
+        <span class="cov8" title="1">wait.Wait()
+
+        return runErr</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/data"
+        "4zp6/cigo/pkg/misc"
+        "os"
+
+        "github.com/invopop/jsonschema"
+)
+
+func CreateSchema(t string) error <span class="cov8" title="1">{
+        var schema jsonschema.Schema
+        switch t </span>{
+        case "project":<span class="cov8" title="1">
+                schema = *jsonschema.Reflect(&amp;data.ProjectDefinition{})</span>
+        case "workspace":<span class="cov8" title="1">
+                schema = *jsonschema.Reflect(&amp;data.Workspace{})</span>
+        }
+        <span class="cov8" title="1">path, err := misc.GetRelativePath("schema/" + t + ".json")
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">data, err := schema.MarshalJSON()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">dir, err := misc.GetRelativePath("schema/")
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">if _, err = os.Stat(dir); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                err = os.Mkdir(dir, 0755)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+        <span class="cov8" title="1">file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">_, err = file.Write(data)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package commands
+
+import (
+        "4zp6/cigo/pkg/data"
+        "4zp6/cigo/pkg/misc"
+        "4zp6/cigo/pkg/parser"
+        "fmt"
+        "sync"
+)
+
+type search struct {
+        Name           *string
+        MainLanguage   *string
+        Target         *string
+        Version        *string
+        Owners         *string
+        DependsOn      *string
+        AffectsTags    *string
+        AffectedByTags *string
+        Others         map[string]string
+}
+
+func mapToSearch(items map[string]string) search <span class="cov8" title="1">{
+        var search search
+
+        if name, ok := items["name"]; ok </span><span class="cov8" title="1">{
+                search.Name = &amp;name
+                delete(items, "name")
+        }</span>
+        <span class="cov8" title="1">if mainLanguage, ok := items["mainLanguage"]; ok </span><span class="cov8" title="1">{
+                search.MainLanguage = &amp;mainLanguage
+                delete(items, "mainLanguage")
+        }</span>
+        <span class="cov8" title="1">if version, ok := items["version"]; ok </span><span class="cov8" title="1">{
+                search.Version = &amp;version
+                delete(items, "version")
+        }</span>
+        <span class="cov8" title="1">if owners, ok := items["owners"]; ok </span><span class="cov8" title="1">{
+                search.Owners = &amp;owners
+                delete(items, "owners")
+        }</span>
+        <span class="cov8" title="1">if target, ok := items["target"]; ok </span><span class="cov8" title="1">{
+                search.Target = &amp;target
+                delete(items, "target")
+        }</span>
+        <span class="cov8" title="1">if dependsOn, ok := items["dependsOn"]; ok </span><span class="cov8" title="1">{
+                search.DependsOn = &amp;dependsOn
+                delete(items, "dependsOn")
+        }</span>
+        <span class="cov8" title="1">if affectsTags, ok := items["affectsTags"]; ok </span><span class="cov8" title="1">{
+                search.AffectsTags = &amp;affectsTags
+                delete(items, "affectsTags")
+        }</span>
+        <span class="cov8" title="1">if affectedByTags, ok := items["affectedByTags"]; ok </span><span class="cov8" title="1">{
+                search.AffectedByTags = &amp;affectedByTags
+                delete(items, "affectedByTags")
+        }</span>
+        <span class="cov8" title="1">search.Others = items
+
+        return search</span>
+}
+
+func Search(items map[string]string) ([]data.ProjectDefinition, error) <span class="cov8" title="1">{
+        var projects []data.ProjectDefinition
+        var wg sync.WaitGroup
+        var mut sync.Mutex
+
+        root, err := misc.GetRoot()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">workspace, err := parser.DecodeWorkspace(root+"/workspace.json", parser.JSON)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">for _, path := range workspace.Projects </span><span class="cov8" title="1">{
+                wg.Add(1)
+                p := path
+                go func() </span><span class="cov8" title="1">{
+                        defer wg.Done()
+
+                        absPath, err := misc.GetRelativePath(p + "/project.json")
+                        if err != nil </span><span class="cov0" title="0">{
+                                fmt.Println(err)
+                                return
+                        }</span>
+                        <span class="cov8" title="1">proj, err := parser.DecodeProjectDef(absPath, parser.JSON)
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                fmt.Println(err)
+                                return
+                        }</span>
+
+                        <span class="cov8" title="1">mut.Lock()
+                        projects = append(projects, *proj)
+                        mut.Unlock()</span>
+                }()
+        }
+        <span class="cov8" title="1">wg.Wait()
+
+        search := mapToSearch(items)
+        var res []data.ProjectDefinition
+Loop:
+        for _, p := range projects </span><span class="cov8" title="1">{
+                if search.Name != nil &amp;&amp; *search.Name != p.Name </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.MainLanguage != nil &amp;&amp; *search.MainLanguage != p.MainLanguage </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.Version != nil &amp;&amp; *search.Version != p.Version </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.Target != nil </span><span class="cov8" title="1">{
+                        if _, ok := p.Targets[*search.Target]; !ok </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                }
+                <span class="cov8" title="1">if search.Owners != nil &amp;&amp; !contains(p.Owners, *search.Owners) </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.DependsOn != nil &amp;&amp; !contains(p.DependsOn, *search.DependsOn) </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.AffectsTags != nil &amp;&amp; !contains(p.AffectsTags, *search.AffectsTags) </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if search.AffectedByTags != nil &amp;&amp; !contains(p.AffectedByTags, *search.AffectedByTags) </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">for k, v := range search.Others </span><span class="cov8" title="1">{
+                        if v1, ok := p.Metadata[k]; !ok || v1 != v </span><span class="cov8" title="1">{
+                                // Breaks out of this loop and continues with the outer loop.
+                                // Very similar to a GOTO, but it continues the loop
+                                continue Loop</span>
+                        }
+                }
+
+                <span class="cov8" title="1">res = append(res, p)</span>
+        }
+
+        <span class="cov8" title="1">return res, nil</span>
+}
+
+func contains(l []string, v string) bool <span class="cov8" title="1">{
+
+        for _, i := range l </span><span class="cov8" title="1">{
+                if i == v </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+
+        <span class="cov8" title="1">return false</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

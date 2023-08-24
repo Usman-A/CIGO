@@ -1,0 +1,54 @@
+{
+    "mainLanguage": "cpp",
+    "lanVersion": "16",
+    "name": "proj_c",
+    "targets": {
+        "build": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "init"
+            }],
+            "cmds": ["echo building application", "echo done building proj_c"],
+            "artifacts": [],
+            "env": {}
+        },
+        "init": {
+            "dependsOn": [],
+            "cmds": [
+                "echo initializing proj_c"
+            ],
+            "artifacts": [],
+            "env": {}
+        },
+        "test": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "build"
+            }],
+            "cmds": [
+                "echo testing proj_c"
+            ],
+            "artifacts": [],
+            "env": {}
+        },
+        "deploy": {
+            "dependsOn": [{
+                "project": "self",
+                "target": "test"
+            }],
+            "cmds": [
+                "echo deploying proj_c"
+            ],
+            "artifacts": [],
+            "env": {
+                "HOST": "FAKE_HOST"
+            }
+        }
+    },
+    "version": "1.0",
+    "owners": [],
+    "dependsOn": ["proj_b"],
+    "metadata": {"knowledge": "expert"},
+    "affectsTags": [],
+    "affectedByTags": []
+}
